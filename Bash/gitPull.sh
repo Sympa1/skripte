@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/bash
+
 # Pull-Script (gitPull.sh)
 
 # Einlesen der .env Datei
