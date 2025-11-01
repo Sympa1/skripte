@@ -1,4 +1,6 @@
 # Umgebungsvariablen-Dateien
 .env
+Python/error.log
+Python/.env
 **/.env
 .venv
