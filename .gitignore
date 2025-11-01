@@ -1,3 +1,4 @@
 # Umgebungsvariablen-Dateien
 .env
 **/.env
+.venv
