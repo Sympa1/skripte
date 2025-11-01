@@ -4,6 +4,10 @@
 """
 TODO: Skriptbeschreibung einfügen
 """
+
+# TODO: Wenn der Commit nicht klappt, weil keine neuen Änderungen vorliegen,
+#       sollte das Skript trotzdem erfolgreich durchlaufen und nicht mit
+#       einem Fehler abbrechen.
 import gc
 import os
 import sys
@@ -769,4 +773,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        # Terminal offen halten
+        input("\nDrücke Enter zum Beenden...")
