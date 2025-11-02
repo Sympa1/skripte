@@ -12,14 +12,12 @@ ausführen sind namentlich dem jeweiligen Skript zugeordnet und befinden sich im
 ```
 .
 ├── bash/
-│   ├── gitPull.sh
-│   └── gitPush.sh
+│   └── PLACEHOLDER.sh
 ├── powershell/
-│   ├── gitPull.ps1
-│   └── gitPush.ps1
+│   └── PLACEHOLDER.ps1
 ├── python/
 │   ├── github_sync_skript.py
-│   └── starter_github_sync.sh
+│   └── starter_github_sync_skript.sh
 ├── .gitignore
 ├── .env
 ├── LICENSE
