@@ -4,3 +4,5 @@ Python/error.log
 Python/.env
 **/.env
 .venv
+.idea/
+.vscode/
