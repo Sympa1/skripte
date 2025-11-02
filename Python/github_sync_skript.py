@@ -9,6 +9,7 @@ TODO: Skriptbeschreibung einfügen
 #       sollte das Skript trotzdem erfolgreich durchlaufen und nicht mit
 #       einem Fehler abbrechen.
 
+import argparse
 import os
 import sys
 import subprocess
@@ -639,7 +640,7 @@ class GitSync:
 
         if success:
             # Erfolg: Grüne Ausgabe mit Git-Output (enthält Branch-Info)
-            print(f"\033[32m✓ Push erfolgreich:\033[0m {output.strip()}")
+            print(f"\033[32m✓ Push erfolgreich\033[0m")
             return True
         else:
             # Fehler: Rote Ausgabe mit Git-Error
@@ -750,26 +751,54 @@ class GitSync:
         return True
 
 def main():
+
     env = EnvLoader()
 
     if not env.load_env_file('.env'):
         print("\033[31mFEHLER: .env-Datei konnte nicht geladen werden.\033[0m")
+        # Programm beenden. Exit-Code 1 signalisiert Fehler für das aufrufende Shell/CI
         sys.exit(1)
 
     repo_path = env.get_var('REPO_PFAD_LIN')
 
     if repo_path is None:
         print("\033[31mFEHLER: REPO_PFAD_LIN nicht in der .env-Datei gefunden.\033[0m")
+        # Programm beenden. Exit-Code 1 signalisiert Fehler für das aufrufende Shell/CI
         sys.exit(1)
 
-    # Git-Sync durchführen
+    # Erzeuge einen ArgumentParser mit einer kurzen Beschreibung (wird in der Hilfe angezeigt).
+    parser = argparse.ArgumentParser(description="Git Sync Skript")
+
+    # Definiert das CLI-Flag `--pull-only`.
+    # - Name: `--pull-only` (lange Form; wird in der Kommandozeile so verwendet).
+    # - action='store_true': Wenn das Flag vorhanden ist, wird `args.pull_only` auf True gesetzt;
+    #   ist es nicht vorhanden, bleibt der Wert False. Ideal für einfache Booleans.
+    # - help: Kurzer Beschreibungstext, der bei `-h/--help` angezeigt wird.
+    parser.add_argument(
+        '-p', '--pull-only',
+        action='store_true',
+        help='Nur Pull ausführen (kein Add/Commit/Push).\nBeispiel: -p oder --pull-only'
+    )
+
+    # Parst die tatsächlichen Kommandozeilenargumente (z. B. sys.argv) und liefert ein Namespace-Objekt.
+    # Zugriff auf das Flag erfolgt über `args.pull_only` (True/False).
+    args = parser.parse_args()
+
     git = GitSync(repo_path)
 
-    if git.sync("Automatischer Sync vom " + datetime.now().strftime('%Y-%m-%d %H:%M:%S')):
-        print("\033[32m✓ Repository erfolgreich synchronisiert!\033[0m")
+    # Git-Pull/Git-Sync durchführen
+    if args.pull_only:
+        print("🔄 Nur Pull ausführen...")
+        if git.pull() == False:
+            print("\033[31m✗ Pull fehlgeschlagen - siehe Logs für Details\033[0m")
+            # Programm beenden. Exit-Code 1 signalisiert Fehler für das aufrufende Shell/CI
+            sys.exit(1)
     else:
-        print("\033[31m✗ Sync fehlgeschlagen - siehe Logs für Details\033[0m")
-        sys.exit(1)
+        print("🔄 Vollständigen Git-Sync ausführen...")
+        if git.sync("Automatischer Sync vom " + datetime.now().strftime('%Y-%m-%d %H:%M:%S')) == False:
+            print("\033[31m✗ Sync fehlgeschlagen - siehe Logs für Details\033[0m")
+            # Programm beenden. Exit-Code 1 signalisiert Fehler für das aufrufende Shell/CI
+            sys.exit(1)
 
 
 if __name__ == "__main__":

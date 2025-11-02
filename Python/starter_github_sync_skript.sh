@@ -1,109 +1,81 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# ============================================================================
-# GitHub Sync Starter - Terminal-Wrapper für verschiedene Linux-Desktops
-# ============================================================================
-
-# Skript-Verzeichnis ermitteln (funktioniert auch bei Symlinks)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_SCRIPT="$SCRIPT_DIR/github_sync_skript.py"
 
-# Prüfen ob Python-Skript existiert
 if [ ! -f "$PYTHON_SCRIPT" ]; then
-    echo "Fehler: $PYTHON_SCRIPT nicht gefunden!"
+    echo "Fehler: $PYTHON_SCRIPT nicht gefunden!" >&2
     exit 1
 fi
 
-# Desktop-Umgebung erkennen (XDG_CURRENT_DESKTOP oder DESKTOP_SESSION)
+ARG_STR=""
+if [ "$#" -gt 0 ]; then
+    ARG_STR="$(printf " %q" "$@")"
+fi
+
+PY_CMD="$(printf "%q" "python3") $(printf "%q" "$PYTHON_SCRIPT")$ARG_STR"
+
 DESKTOP="${XDG_CURRENT_DESKTOP:-$DESKTOP_SESSION}"
 
-# Terminal-Emulatoren nach Desktop-Umgebung zuordnen
 case "$DESKTOP" in
     *KDE*)
-        # KDE Plasma - Konsole bleibt mit --hold offen
-        TERM_CMD="konsole --hold -e"
+        if command -v konsole &> /dev/null; then
+            eval "konsole -e bash -c \"$PY_CMD\""
+            exit $?
+        fi
         ;;
-    *GNOME*|*Unity*)
-        # GNOME/Unity - Terminal mit manueller Pause (read-Befehl)
-        TERM_CMD="gnome-terminal -- bash -c"
-        WRAP_CMD="; read -p 'Drücke Enter zum Schließen...'"
+    *GNOME*|*Unity*|*Cinnamon*)
+        if command -v gnome-terminal &> /dev/null; then
+            eval "gnome-terminal -- bash -c \"$PY_CMD\""
+            exit $?
+        fi
         ;;
     *XFCE*)
-        # XFCE - Terminal bleibt mit --hold offen
-        TERM_CMD="xfce4-terminal --hold -e"
+        if command -v xfce4-terminal &> /dev/null; then
+            eval "xfce4-terminal -e bash -c \"$PY_CMD\""
+            exit $?
+        fi
         ;;
     *MATE*)
-        # MATE Desktop - Terminal mit manueller Pause
-        TERM_CMD="mate-terminal -- bash -c"
-        WRAP_CMD="; read -p 'Drücke Enter zum Schließen...'"
-        ;;
-    *Cinnamon*)
-        # Cinnamon (Linux Mint) - nutzt gnome-terminal
-        TERM_CMD="gnome-terminal -- bash -c"
-        WRAP_CMD="; read -p 'Drücke Enter zum Schließen...'"
+        if command -v mate-terminal &> /dev/null; then
+            eval "mate-terminal -- bash -c \"$PY_CMD\""
+            exit $?
+        fi
         ;;
     *LXDE*|*LXQt*)
-        # LXDE/LXQt - LXTerminal mit --command
-        TERM_CMD="lxterminal --command"
-        ;;
-    *)
-        # Unbekannter Desktop - Fallback-Logik verwenden
-        TERM_CMD=""
+        if command -v lxterminal &> /dev/null; then
+            eval "lxterminal --command \"bash -c \\\"$PY_CMD\\\"\""
+            exit $?
+        fi
         ;;
 esac
 
-# Funktion: Python-Skript im Terminal ausführen
-run_in_terminal() {
-    # Desktop-spezifisches Terminal gefunden?
-    if [ -n "$TERM_CMD" ]; then
-        if [ -n "$WRAP_CMD" ]; then
-            # Terminal benötigt manuellen Pause-Befehl (GNOME, MATE, Cinnamon)
-            $TERM_CMD "python3 '$PYTHON_SCRIPT'$WRAP_CMD"
-        else
-            # Terminal unterstützt --hold Flag (KDE, XFCE)
-            $TERM_CMD python3 "$PYTHON_SCRIPT"
-        fi
-        return $?
+for term in konsole gnome-terminal xfce4-terminal mate-terminal lxterminal alacritty kitty xterm; do
+    if command -v "$term" &> /dev/null; then
+        case "$term" in
+            konsole)
+                eval "konsole -e bash -c \"$PY_CMD\""
+                ;;
+            gnome-terminal|mate-terminal)
+                eval "$term -- bash -c \"$PY_CMD\""
+                ;;
+            xfce4-terminal)
+                eval "xfce4-terminal -e bash -c \"$PY_CMD\""
+                ;;
+            lxterminal)
+                eval "lxterminal --command \"bash -c \\\"$PY_CMD\\\"\""
+                ;;
+            alacritty|kitty)
+                eval "$term -e bash -c \"$PY_CMD\""
+                ;;
+            xterm)
+                eval "xterm -e bash -c \"$PY_CMD\""
+                ;;
+        esac
+        exit $?
     fi
+done
 
-    # Fallback: Verfügbare Terminals in Reihenfolge durchprobieren
-    for term in konsole gnome-terminal xfce4-terminal mate-terminal lxterminal alacritty kitty xterm; do
-        if command -v "$term" &> /dev/null; then
-            case "$term" in
-                konsole)
-                    # KDE Konsole: --hold hält Terminal offen
-                    konsole --hold -e python3 "$PYTHON_SCRIPT"
-                    ;;
-                gnome-terminal|mate-terminal)
-                    # GNOME/MATE: Bash-Wrapper mit read-Pause
-                    $term -- bash -c "python3 '$PYTHON_SCRIPT'; read -p 'Drücke Enter zum Schließen...'"
-                    ;;
-                xfce4-terminal)
-                    # XFCE Terminal: --hold Option
-                    xfce4-terminal --hold -e "python3 '$PYTHON_SCRIPT'"
-                    ;;
-                lxterminal)
-                    # LXTerminal: --command mit Bash-Wrapper
-                    lxterminal --command "bash -c \"python3 '$PYTHON_SCRIPT'; read -p 'Drücke Enter zum Schließen...'\""
-                    ;;
-                alacritty|kitty)
-                    # Moderne GPU-beschleunigte Terminals
-                    $term -e bash -c "python3 '$PYTHON_SCRIPT'; read -p 'Drücke Enter zum Schließen...'"
-                    ;;
-                xterm)
-                    # Klassisches X Terminal: -hold Option
-                    xterm -hold -e python3 "$PYTHON_SCRIPT"
-                    ;;
-            esac
-            exit $?
-        fi
-    done
-
-    # Letzter Fallback: Kein grafisches Terminal gefunden - im aktuellen Terminal ausführen
-    echo "⚠ Kein grafisches Terminal gefunden. Ausführung im aktuellen Terminal:"
-    python3 "$PYTHON_SCRIPT"
-    read -p "Drücke Enter zum Schließen..."
-}
-
-# Terminal-Funktion ausführen
-run_in_terminal
+echo "⚠ Kein grafisches Terminal gefunden. Ausführung im aktuellen Terminal:"
+eval "$PY_CMD"
