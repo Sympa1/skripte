@@ -17,8 +17,8 @@ Die Skripte dienen der Automatisierung wiederkehrender Aufgaben und der Vereinfa
 │   ├── gitPull.ps1
 │   └── gitPush.ps1
 ├── python/
-│   ├── backup_skript_drive.py
-│   └── backup_skript_drive_starter.sh
+│   ├── github_sync_skript.py
+│   └── starter_github_sync.sh
 ├── .gitignore
 ├── .env
 ├── LICENSE
