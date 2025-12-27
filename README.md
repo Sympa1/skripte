@@ -7,22 +7,14 @@ und nicht versioniert.
 Die Skripte sind nach Programmiersprache sortiert. Starter-Skripte, die ein Terminal öffnen und das jeweilige Skript
 ausführen sind namentlich dem jeweiligen Skript zugeordnet und befinden sich im selben Verzeichnis.
 
-## Verzeichnisstruktur
+## Bash
+- starter.sh = Startet Python Skripte mit einem Virtuellen Envirement
 
-```
-.
-├── bash/
-│   └── PLACEHOLDER.sh
-├── powershell/
-│   └── PLACEHOLDER.ps1
-├── python/
-│   ├── github_sync_skript.py
-│   └── starter_github_sync_skript.sh
-├── .gitignore
-├── .env
-├── LICENSE
-└── README.md
-```
+## Python
+- github_sync_skript.py = Synchronisiert ein spezielles GitHub Repo. Per Flag steurbar, ob nur lokal Aktualisiert, oder auch in Repo gepusht werden soll.
+
+## VBS
+- StartQuakeHidden.vbs = Wenn im Windows Autostartverzeichnis, wird bei jedem Systemstart das Windows Temrinal im Quake Modus im Hintergrund geöffnet.
 
 ## Lizenz
 
